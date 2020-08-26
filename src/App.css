@@ -129,7 +129,6 @@ nav, aside {
 }
 
 nav, aside, main {
-  text-transform: uppercase;
   color: lightslategray;
   display: flex;
   align-items: center;
