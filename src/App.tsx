@@ -1,30 +1,51 @@
 import React from "react";
+import { RouteProps } from "react-router";
+import {
+  BrowserRouter as Router,
+  Redirect,
+  Route,
+  Switch,
+} from "react-router-dom";
 import "./App.css";
-import { Side } from "./Side";
-import { Main } from "./Main";
-import { LoginProvider, useLoginContext } from "./contexts/login";
-import { StartChatPage } from "./pages/startChatPage";
+import { LoginContextProvider, useLoginContext } from "./contexts/loginContext";
+import { ChannelPage } from "./pages/ChannelPage";
+import { NewChannelPage } from "./pages/NewChannelPage";
+import { StartChatPage } from "./pages/StartChatPage";
 
 export const App = () => {
   return (
-    <LoginProvider>
-      <Foo />
-    </LoginProvider>
+    <LoginContextProvider>
+      <Router>
+        <Switch>
+          <PrivateRoute path="/channels/:channel" component={ChannelPage} />
+          <PrivateRoute path="/newchannel" component={NewChannelPage} />
+          <Route path="/" component={StartChatPage} />
+        </Switch>
+      </Router>
+    </LoginContextProvider>
   );
 };
 
-const Foo = () => {
+const PrivateRoute = ({
+  component: Component,
+  ...rest
+}: {
+  readonly component: any;
+} & Omit<RouteProps, "render">) => {
   const { loggedIn } = useLoginContext();
-  if (loggedIn) {
-    return (
-      <div className="container">
-        <header></header>
 
-        <Side></Side>
-        <Main></Main>
-      </div>
-    );
-  } else {
-    return <StartChatPage />;
-  }
+  return (
+    <Route
+      {...rest}
+      render={(props) =>
+        loggedIn ? (
+          <Component {...props} />
+        ) : (
+          <Redirect
+            to={{ pathname: "/", state: { referer: props.location } }}
+          />
+        )
+      }
+    />
+  );
 };

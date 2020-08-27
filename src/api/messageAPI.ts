@@ -1,57 +1,70 @@
+const messages: Message[] = [];
+let messageListeners: MessageListener[] = [];
+let nextMessageId = 1;
+
 export class MessageAPI {
-  private nextMessageId = 1;
-  private messages: Message[] = []
-  private messageListeners = new Map<string, MessageListener>()
-
-  constructor() {
-    console.log('MessageAPI created')
+  subscribe(listener: MessageListener): Subscription {
+    messageListeners.push(listener);
+    return {
+      unsubscribe: () => this.unsubscribe(listener),
+    };
   }
 
-  onMessage(channel: string, listener: MessageListener): void {
-    console.log('MessageAPI: MessageListener set')
-    this.messageListeners.set(channel, listener)
+  private unsubscribe(listener: MessageListener): void {
+    messageListeners = messageListeners.filter((l) => listener !== l);
   }
 
-  async postMessage({username, text, channelId}: NewMessage): Promise<Message> {
-    await new Promise(resolve => setTimeout(resolve, 200))
+  async postMessage({
+    username,
+    text,
+    channelId,
+  }: NewMessage): Promise<Message> {
+    await new Promise((resolve) => setTimeout(resolve, 200));
     const message: Message = {
-      messageId: this.generateNextMessageId(),
-      username, text, channelId,
+      messageId: MessageAPI.generateNextMessageId(),
+      username,
+      text,
+      channelId,
+    };
+    MessageAPI.addMessage(message);
+    return message;
+  }
+
+  async close(): Promise<void> {}
+
+  private static addMessage(message: Message): void {
+    MessageAPI.publishMMessage(message);
+    messages.push(message);
+  }
+
+  private static publishMMessage(message: Message): void {
+    for (const listener of messageListeners) {
+      listener(message);
     }
-    this.addMessage(message)
-    return message
   }
 
-  async close(): Promise<void> {
-    console.log('MessageAPI: close')
+  private static generateNextMessageId(): number {
+    const _nextMessageId = nextMessageId;
+    nextMessageId++;
+    return _nextMessageId;
   }
+}
 
-  private addMessage(message: Message): void {
-    const messageListener = this.messageListeners.get(message.channelId)
-    if (messageListener) {
-      messageListener(message)
-    }
-    this.messages.push(message)
-  }
-
-  private generateNextMessageId(): number {
-    const nextMessageId = this.nextMessageId;
-    this.nextMessageId++;
-    return nextMessageId
-  }
+export interface Subscription {
+  unsubscribe(): void;
 }
 
 export type Message = {
-  readonly messageId: number
-  readonly username: string
-  readonly text: string
-  readonly channelId: string
-}
+  readonly messageId: number;
+  readonly username: string;
+  readonly text: string;
+  readonly channelId: string;
+};
 
 export type NewMessage = {
-  readonly username: string
-  readonly text: string
-  readonly channelId: string
-}
+  readonly username: string;
+  readonly text: string;
+  readonly channelId: string;
+};
 
-export type MessageListener = (message: Message) => void
+export type MessageListener = (message: Message) => void;

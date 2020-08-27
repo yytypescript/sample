@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { LoginAPI } from "../api/loginAPI";
 
 /**
  * ログイン/ログアウトの状態の型定義
@@ -35,13 +36,14 @@ const initialState: LoginState = {
 const LoginContext = React.createContext(initialState);
 
 // コンテキストのプロバイダー
-export const LoginProvider = ({
+export const LoginContextProvider = ({
   children,
 }: {
   readonly children: React.ReactNode;
 }) => {
   const [loggedIn, setLoggedIn] = useState(initialState.loggedIn);
   const [username, setUsername] = useState(initialState.username);
+  const loginAPI = new LoginAPI();
 
   useEffect(() => {
     loginAPI.fetchUsername().then((username) => {
@@ -50,7 +52,7 @@ export const LoginProvider = ({
         setUsername(username);
       }
     });
-  }, []);
+  }, [loginAPI]);
 
   const loginState: LoginState = {
     loggedIn,
@@ -73,29 +75,3 @@ export const LoginProvider = ({
 };
 
 export const useLoginContext = () => React.useContext(LoginContext);
-
-/**
- * ログインAPI
- *
- * このサンプルアプリでは便宜的にセッションストレージを用います。
- * 実際の実装では、サーバの認証APIを呼び出す実装になると思います。
- *
- * セッションストレージはブラウザのタブが閉じられるまで値を保持するストレージです。
- * 似たものにローカルストレージがありますが、ローカルストレージはブラウザのタブを閉じてもデータが消えない点と、タブ間でデータが共有される点が異なります。
- * このサンプルアプリでは複数のタブを開いて、異なるユーザ名で同時にログインしたいので、ローカルストレージではなくセッションストレージを使います。
- */
-class LoginAPI {
-  async fetchUsername(): Promise<string | null> {
-    return sessionStorage.getItem("username");
-  }
-
-  async login(username: string): Promise<void> {
-    sessionStorage.setItem("username", username);
-  }
-
-  async logout(): Promise<void> {
-    sessionStorage.removeItem("username");
-  }
-}
-
-const loginAPI = new LoginAPI();
