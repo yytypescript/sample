@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Redirect } from "react-router-dom";
+import { Redirect, useLocation } from "react-router-dom";
 import { HorizontallyVerticallyCentered } from "../components/HorizontallyVerticallyCentered";
 import { useLoginContext } from "../contexts/loginContext";
 
@@ -10,13 +10,14 @@ export const StartChatPage = () => {
   const [username, setUsername] = useState(""); // 入力されたユーザ名
   const [usernameError, setUsernameError] = useState(""); // ユーザ名のバリデーションエラーメッセージ
   const [isValid, setValid] = useState(false); // フォームが送信可能かどうか
+  const location = useLocation();
 
   // ログインコンテキストを扱うために必要
   const { loggedIn, setLogin } = useLoginContext();
 
   // ログイン状態だったらチャネルページに遷移する
   if (loggedIn) {
-    return <Redirect to="/channels/general" />;
+    return <Redirect to={(location.state as any).referer.pathname} />;
   }
 
   // ログインフォームが送信されたときの処理
