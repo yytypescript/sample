@@ -1,14 +1,28 @@
-const channels = new Set<string>(["general", "random"]);
+const host = "http://localhost:3001";
 
 export class ChannelAPI {
   async create({ name }: { readonly name: string }): Promise<void> {
-    if (channels.has(name)) {
-      throw new Error(`channel already exists`);
+    const response = await fetch(`${host}/channels`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ name }),
+    });
+    if (response.ok) {
+      return;
     }
-    channels.add(name);
+    const error = await response.json();
+    throw new Error(error.message);
   }
 
   async list(): Promise<Array<string>> {
-    return Array.from(channels.values()).sort();
+    const response = await fetch(`${host}/channels`);
+    const data = await response.json();
+    if (response.ok) {
+      return (data as Array<{ name: string }>).map((channel) => channel.name);
+    } else {
+      throw new Error(data.message);
+    }
   }
 }
