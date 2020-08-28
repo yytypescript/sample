@@ -10,6 +10,10 @@ export class MessageAPI {
     };
   }
 
+  async pull(): Promise<Message[]> {
+    return messages;
+  }
+
   private unsubscribe(listener: MessageListener): void {
     messageListeners = messageListeners.filter((l) => listener !== l);
   }

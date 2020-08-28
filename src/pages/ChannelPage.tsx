@@ -7,20 +7,13 @@ import { useLoginContext } from "../contexts/loginContext";
 export const ChannelPage = () => {
   const { channel } = useParams<{ channel: string }>();
 
-  useEffect(() => {
-    return () =>
-      console.warn(
-        "ChannelPageがアンマウントされると受信済みメッセージが消し飛ぶ問題を何とかする"
-      );
-  }, []);
-
   return (
     <div className="flex h-full">
       <div style={{ width: 220 }} className="h-full">
-        <SideMenu />
+        <ChannelList channel={channel} />
       </div>
       <div className="flex-1 h-full">
-        <ChannelView channel={channel} />
+        <Channel channel={channel} />
       </div>
     </div>
   );
@@ -28,7 +21,11 @@ export const ChannelPage = () => {
 
 const channelAPI = new ChannelAPI();
 
-const SideMenu = () => {
+type ChannelList = {
+  readonly channel: string;
+};
+
+const ChannelList = ({ channel }: ChannelList) => {
   const { setLogout } = useLoginContext();
   const [channels, setChannels] = useState<string[]>([]);
 
@@ -51,13 +48,17 @@ const SideMenu = () => {
         </button>
       </div>
       <div className="flex-1 my-4 overflow-y-scroll">
-        {channels.map((channel) => (
+        {channels.map((_channel) => (
           <Link
-            key={channel}
-            to={`/channels/${channel}`}
-            className="block px-4 py-1 hover:bg-blue-500"
+            key={_channel}
+            to={`/channels/${_channel}`}
+            className={`block px-4 py-1 ${
+              _channel === channel
+                ? "bg-blue-500"
+                : "text-blue-200 hover:bg-blue-400"
+            }`}
           >
-            # {channel}
+            # {_channel}
           </Link>
         ))}
       </div>
@@ -71,11 +72,11 @@ const SideMenu = () => {
   );
 };
 
-type ChannelViewProps = {
+type ChannelProps = {
   readonly channel: string;
 };
 
-const ChannelView = ({ channel }: ChannelViewProps) => {
+const Channel = ({ channel }: ChannelProps) => {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const messageAPI = useRef<MessageAPI | null>();
@@ -88,6 +89,10 @@ const ChannelView = ({ channel }: ChannelViewProps) => {
     const subscription = messageAPI.current.subscribe((message: Message) => {
       setMessages((messages) => messages.concat(message));
       messagesBottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    });
+    messageAPI.current.pull().then((messages) => {
+      setMessages(messages);
+      messagesBottomRef.current?.scrollIntoView();
     });
     return () => subscription.unsubscribe();
   }, [channel]);
