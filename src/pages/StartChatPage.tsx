@@ -17,7 +17,11 @@ export const StartChatPage = () => {
 
   // ログイン状態だったらチャネルページに遷移する
   if (loggedIn) {
-    return <Redirect to={(location.state as any).referer.pathname} />;
+    return (
+      <Redirect
+        to={(location.state as any)?.referer.pathname ?? "/channels/general"}
+      />
+    );
   }
 
   // ログインフォームが送信されたときの処理
